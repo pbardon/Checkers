@@ -1,14 +1,16 @@
 ##encoding: utf-8
 require './piece'
+
 class Board
+  
   def initialize
-    @board = Array.new(10) { Array.new(10) {nil} }
+    @board = Array.new(8) { Array.new(8) {nil} }
   end
   
   def render
     black = true
     @board.each_with_index do |row, y|
-      row.each_with_index do |tile, x|
+      row.each do |tile|
         if tile == nil
           print " ⬜ " if black == false
           print " ⬛ " if black == true
@@ -17,24 +19,50 @@ class Board
         end
         black = !black
       end
+      black = !black
       puts
     end
     
     puts
     puts
   end
-  
-  def valid_move_seq?(seq)
+
+  def set_board(color)
+    (color == :black ? place = false : place = true )
+    (0..7).each do |x|
+      if color == :white
+        (0..2).each do |y|
+          Piece.new([x, y], self, color) if place != true
+          place = !place
+        end
+        place = !place
+      else
+        (5..7).each do |y|
+          Piece.new([x, y], self, :black) if place != true
+          place = !place
+        end
+        place = !place
+      end
+      place = !place
+    end
+  end
   
   
   def dup
     new_board = Board.new
     @board.each_with_index do |row, y|
       row.each_with_index do |tile, x|
-        new_board[x,y] = @board[x,y]
+        next if tile.nil?
+        new_board[[x,y]] = Piece.new([x,y], new_board, tile.color)
       end
     end
+    new_board
   end  
+  
+  def valid_move_seq?(seq)
+    duped_board = @board_obj.dup
+    perform_moves!(seq) 
+  end
   
   def [](pos)
     x, y = pos
@@ -52,13 +80,22 @@ if __FILE__ == $PROGRAM_NAME
   b = Board.new
   b.render
   b1 = Piece.new([0,0], b, :black)
-  w1 = Piece.new([1,2], b, :white)
-  b.render
-  b1.perform_slide([0,0], [0, 1])
-  b.render
-  b1.perform_jump([0,1], [2,3])
+##  w1 = Piece.new([1,1], b, :white)
+#  b.render
+#  b.render
+ ## b1.perform_jump([0,0], [2,2])
   #b.render
-  #w1.perform_slide([1,2], [1, 1])
+ # b1.perform_jump([0,0], [2, 2])
+  b.set_board(:white)
+  
+  b.set_board(:black)
+  b1 = Piece.new([2,3], b, :black)
+  b[[4,5]].perform_slide([4,5], [5,4])
+  b[[3,6]].perform_slide([3,6], [4,5])
+  b.render
+  b[[3,2]].perform_moves([[3,2], [1,4]])
   b.render
   b.dup
+
+  
 end
