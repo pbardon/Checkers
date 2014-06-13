@@ -4,7 +4,7 @@ require './board'
 
 class Piece
   
-  attr_reader :color, :pos
+  attr_reader :color, :position
   
   def initialize(pos, board, color)
     @board_obj = board
@@ -22,47 +22,46 @@ class Piece
     end
   end
   
-  def perform_slide(from_pos, to_pos)
-    
-  ##  add_moves = Proc.new(possible_moves << [(from_pos.first + dif.first), (from_pos.last + dif.last)])
-    
-    raise "Those are invalid moves" if !valid_moves?(from_pos) || !valid_moves?(to_pos)
+  def perform_slide(to_pos)
+ 
+    raise "Those are invalid moves" if !valid_moves?(@position) || !valid_moves?(to_pos)
     
     possible_moves = []
     
     if @king
-      
       move_diffs.each do |dif| 
-        possible_moves << [(from_pos.first + dif.first), (from_pos.last + dif.last)]
+        possible_moves << [(@position.first + dif.first), (@position.last + dif.last)]
       end
       
     else  
-      
       difs = ((@color == :black) ? move_diffs.drop(2) : move_diffs.take(2))
-      
+
+    
       difs.each do |dif| 
-        pos = [(from_pos.first + dif.first), (from_pos.last + dif.last)]
+        pos = [(@position.first + dif.first), (@position.last + dif.last)]
         possible_moves << pos
       end
-      
+      p "possible_moves:#{possible_moves}"
     end
-    p possible_moves
+    
     raise "That is an illegal move" if !possible_moves.include?(to_pos)
     raise "There is a piece there" if !@board_obj[to_pos].nil?
     
-    @board_obj[from_pos] = nil
+    @board_obj[@position] = nil
     set_position(to_pos)
     
   end
 
   
-  def perform_jump(from_pos, to_pos)
-    raise "Those are invalid moves" if !valid_moves?(from_pos) || !valid_moves?(to_pos)
+  def perform_jump(to_pos)
     
+    puts "Those are invalid moves" if !valid_moves?(@position) || !valid_moves?(to_pos)
+    
+    difs = ((@color == :black) ? move_diffs.drop(2) : move_diffs.take(2))
     jumpable_tiles = []
     
-    move_diffs.each do |diffs|
-      pos = [(from_pos.first + diffs.first) , (from_pos.last + diffs.last)]
+    difs.each do |diffs|
+      pos = [(@position.first + diffs.first) , (@position.last + diffs.last)]
       jumpable_tiles << pos
     end  
     
@@ -71,71 +70,89 @@ class Piece
     jump_pieces = jumpable_tiles.select do |pos| 
       @board_obj[pos].is_a?(Piece) && @board_obj[pos].color != @color
     end
-    
-    if (from_pos.first - to_pos.first).abs != 2 && (from_pos.last - to_pos.last).abs != 2
-      raise "That's an illegal jump"
-    elsif !jump_pieces.empty?
-      @board_obj[from_pos] = nil
-      dx = (to_pos.first - from_pos.first) / 2
-      dy = (to_pos.last - from_pos.last) / 2
-      jumped_piece_pos = [(from_pos.first + dx), (from_pos.last + dy)]
+   
+    if (@position.first - to_pos.first).abs != 2 && (@position.last - to_pos.last).abs != 2
+     puts "That's an illegal jump, from #{@position} to #{to_pos}"
+      
+    elsif !jumpable_tiles.empty?
+      puts "position is #{@position}"
+      
+      p "try to jump from #{@position} to #{to_pos}"
+
+      
+      new_x = (to_pos.first + @position.first) / 2
+      new_y = (to_pos.last + @position.last) / 2
+      
+      
+      jumped_piece_pos = [new_x, new_y]
+      
+      p "jumped piece #{jumped_piece_pos}, and I am #{object_id}"
+      
       @board_obj[jumped_piece_pos] = nil
+      
       set_position(to_pos)
+      
     else
-      raise "Can't jump! No piece there"
+      puts "Can't jump! No piece there"
     end
   end
   
   def perform_moves(move_seq)
+    p "move seq: (btw I am #{object_id})"
     if valid_move_seq?(move_seq)
       perform_moves!(move_seq)
     else
-      raise InvalidMoveError.new
+      puts "Valid_move_seq is fucked"
     end
   end
   
   def perform_moves!(move_seq)
-    if move_seq.length < 2
+    p "i am #{object_id} and I am performing moves!"
+    if move_seq.length == 1
+      current_move = move_seq.first
       begin
-        perform_slide(move_seq.first,  move_seq.last )
+        puts "try to slide"
+        perform_slide(current_move)
       rescue
-        ##raise InvalidMoveError.new
-        perform_jump( move_seq[0].first,  move_seq[0].last ) 
+        puts "try to jump"
+        p current_move
+        perform_jump(current_move) 
+       ## raise InvalidMoveError.new
       end
     else
-      until move_seq.empty?
-        begin
-          current_move = move_seq.shift
-          perform_jump(current_move.first,  current_move.last)
-        rescue
-          raise InvalidMoveError.new
-        end
+      move_seq.each do |current_move|
+        perform_jump(current_move)
       end
     end
+    p "i am #{object_id} and I have finished performing moves!"
   end
   
   def valid_move_seq?(seq)
     duped_board = @board_obj.dup
     dup_piece = Piece.new(@position, duped_board, self.color)
     begin
+      puts "try to perform moves"
+      p seq
       dup_piece.perform_moves!(seq)
       return true
-    rescue
+    rescue StandardError => e
+      puts e.message
       return false
     end
   end
   
   def promote_piece
     (color == :white) ? promote_y = 0 : promote_y = 7
-    ( (self.position.last == promote_y) ? @king = true : @king = false )
+    ((self.position.last == promote_y) ? @king = true : @king = false )
   end
   
   private
   
   
   def set_position(pos)
-    x, y = pos
+    @board_obj[@position] = nil
     @board_obj[pos] = self
+    @position = pos
   end
   
   def move_diffs

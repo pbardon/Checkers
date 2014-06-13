@@ -32,11 +32,11 @@ class Board
     (0..7).each do |x|
       if color == :white
         (0..2).each do |y|
-          Piece.new([x, y], self, color) if place != true
+          Piece.new([x, y], self, :white) if place != true
           place = !place
         end
         place = !place
-      else
+      elsif color == :black
         (5..7).each do |y|
           Piece.new([x, y], self, :black) if place != true
           place = !place
@@ -78,8 +78,7 @@ end
   
 if __FILE__ == $PROGRAM_NAME
   b = Board.new
-  b.render
-  b1 = Piece.new([0,0], b, :black)
+##  b1 = Piece.new([0,0], b, :black)
 ##  w1 = Piece.new([1,1], b, :white)
 #  b.render
 #  b.render
@@ -87,14 +86,23 @@ if __FILE__ == $PROGRAM_NAME
   #b.render
  # b1.perform_jump([0,0], [2, 2])
   b.set_board(:white)
-  
   b.set_board(:black)
-  b1 = Piece.new([2,3], b, :black)
-  b[[4,5]].perform_slide([4,5], [5,4])
-  b[[3,6]].perform_slide([3,6], [4,5])
   b.render
-  b[[3,2]].perform_moves([[3,2], [1,4]])
+ ## b1 = Piece.new([2,3], b, :black)
+  p b[[4,5]].object_id
+  b[[4,5]].perform_slide([5,4])
+  
   b.render
+  b[[2,5]].perform_slide([3,4])
+  b[[5,2]].perform_slide([4,3])
+  b[[3,4]].perform_slide([2,3])
+  b[[3,6]].perform_slide([4,5])
+  b[[1,6]].perform_slide([2,5])
+  b.render
+  b[[1,2]].perform_moves([[3,4], [1,6], []])
+  b.render
+  
+  b1 = Piece.new([0,0], b, :black)
   b.dup
 
   
