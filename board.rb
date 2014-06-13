@@ -99,11 +99,11 @@ if __FILE__ == $PROGRAM_NAME
   b[[3,6]].perform_slide([4,5])
   b[[1,6]].perform_slide([2,5])
   b.render
-  b[[1,2]].perform_moves([[3,4], [1,6], []])
+  b[[1,2]].perform_moves([[3,4], [1,6]])
   b.render
   
-  b1 = Piece.new([0,0], b, :black)
-  b.dup
+  ##b1 = Piece.new([0,0], b, :black)
+ ## b.dup
 
   
 end
